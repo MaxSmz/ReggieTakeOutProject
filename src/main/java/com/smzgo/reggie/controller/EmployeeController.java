@@ -80,19 +80,20 @@ public class EmployeeController {
         String password = DigestUtils.md5DigestAsHex("123456".getBytes());
         employee.setPassword(password);
 
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
+//        employee.setCreateTime(LocalDateTime.now());
+//        employee.setUpdateTime(LocalDateTime.now());
 
 
-        Long empId = (Long) request.getSession().getAttribute("employee");
-
-        employee.setCreateUser(empId);
-        employee.setUpdateUser(empId);
+//        Long empId = (Long) request.getSession().getAttribute("employee");
+//
+//        employee.setCreateUser(empId);
+//        employee.setUpdateUser(empId);
         employeeService.save(employee);
 
         return R.success("新增员工成功");
     }
 
+    // 分页查询
     @GetMapping("/page")
     public R<Page> page(int page, int pageSize, String name) {
         log.info("page = {}, pageSize = {}, name = {}", page,pageSize,name);
@@ -114,20 +115,22 @@ public class EmployeeController {
         return R.success(pageInfo);
     }
 
+    // 更新员工
     @PutMapping
     public R<String> update(HttpServletRequest request,@RequestBody Employee employee) {
         log.info("更新employee = {}",employee);
 
         // 获得当前登陆的用户
-        Long empId = (Long) request.getSession().getAttribute("employee");
-
-        employee.setUpdateUser(empId);
-        employee.setUpdateTime(LocalDateTime.now());
+//        Long empId = (Long) request.getSession().getAttribute("employee");
+//
+//        employee.setUpdateUser(empId);
+//        employee.setUpdateTime(LocalDateTime.now());
         employeeService.updateById(employee);
 
         return R.success("员工信息修改成功!");
     }
 
+    // 根据id查找员工
     @GetMapping("/{id}")
     public R<Employee> getById(@PathVariable Long id) {
         log.info("根据id查询员工信息");
