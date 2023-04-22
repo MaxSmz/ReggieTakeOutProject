@@ -40,7 +40,8 @@ public class LoginCheckFilter implements Filter {
                 "/employee/login",
                 "/employee/logout",
                 "/backend/**",
-                "/front/**"
+                "/front/**",
+                "/common/**"
         };
 
         log.info("拦截到请求：{}",request.getRequestURI());
