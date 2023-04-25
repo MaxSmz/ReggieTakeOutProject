@@ -13,11 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import javax.security.auth.callback.LanguageCallback;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/dish")
@@ -33,6 +29,11 @@ public class DishController {
     @Autowired
     private CategoryService categoryService;
 
+    /**
+     * 保存菜品
+     * @param dishDto
+     * @return
+     */
     @PostMapping
     public R<String> save(@RequestBody DishDto dishDto) {
         // 使用dto来封装dish与dishFlavor两张表的实体类
@@ -40,7 +41,13 @@ public class DishController {
         return R.success("新增菜品成功！");
     }
 
-
+    /**
+     * 分页展示菜品
+     * @param page
+     * @param pageSize
+     * @param name
+     * @return
+     */
     @GetMapping("/page")
     public R<Page> page(int page, int pageSize, String name) {
 
@@ -81,5 +88,25 @@ public class DishController {
         return R.success(dishDtoPage);
     }
 
+    /**
+     * 获得菜品
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public R<DishDto> get(@PathVariable Long id) {
+        DishDto byIdDishWithFlavor = dishService.getByIdDishWithFlavor(id);
+        return R.success(byIdDishWithFlavor);
+    }
 
+    /**
+     * 更新菜品
+     * @param dishDto
+     * @return
+     */
+    @PutMapping
+    public R<String> update(@RequestBody DishDto dishDto) {
+        dishService.updateDishWithFlavor(dishDto);
+        return R.success("修改菜品成功");
+    }
 }

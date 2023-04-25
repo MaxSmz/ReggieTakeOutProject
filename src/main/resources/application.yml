@@ -1,6 +1,8 @@
 server:
   port: 8080
 spring:
+  main:
+    allow-circular-references: true
   application:
     name: reggie_take_out
   datasource:
@@ -17,6 +19,8 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: ASSIGN_ID
+
+
 
 reggie:
   path: /Users/jasonsun/Java/reggie/reggie_pic/
