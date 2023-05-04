@@ -11,20 +11,16 @@ import java.time.LocalDateTime;
  * 套餐菜品关系
  */
 @Data
-public class Setmeal implements Serializable {
+public class SetmealDish implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private Long id;
 
-    //菜品分类id
-    private Long categoryId;
 
     //套餐id
     private Long setmealId;
 
-    //图片
-    private String image;
 
     //菜品id
     private Long dishId;
