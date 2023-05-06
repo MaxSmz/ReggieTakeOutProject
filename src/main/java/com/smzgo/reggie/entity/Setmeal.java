@@ -21,27 +21,30 @@ public class Setmeal implements Serializable {
     private Long categoryId;
 
     //套餐id
-    private Long setmealId;
+//    private Long setmealId;
 
     //图片
     private String image;
 
     //菜品id
-    private Long dishId;
+//    private Long dishId;
 
 
     //菜品名称 （冗余字段）
     private String name;
 
+    // 套餐销售状态
+    private Integer status;
+
     //菜品原价
     private BigDecimal price;
 
     //份数
-    private Integer copies;
+//    private Integer copies;
 
 
     //排序
-    private Integer sort;
+//    private Integer sort;
 
 
     @TableField(fill = FieldFill.INSERT)
