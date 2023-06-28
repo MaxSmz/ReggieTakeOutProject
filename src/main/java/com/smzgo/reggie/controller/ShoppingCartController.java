@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/shoppingCart")
@@ -17,9 +19,15 @@ public class ShoppingCartController {
     @Autowired
     private ShoppingCartService shoppingCartService;
 
+
+    /**
+     * 添加购物车
+     * @param shoppingCart
+     * @return
+     */
     @PostMapping("/add")
     public R<ShoppingCart> add(@RequestBody ShoppingCart shoppingCart) {
-        log.info("添加购物车");
+        log.info("添加购物车...");
 
         // 获得当前用户id
         Long userId = BaseContext.getCurrentId();
@@ -49,6 +57,33 @@ public class ShoppingCartController {
 
         return R.success(shoppingCartOne);
     }
+
+    /**
+     * 查询购物车
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<ShoppingCart>> list() {
+        log.info("查询购物车...");
+        LambdaQueryWrapper<ShoppingCart> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(ShoppingCart::getUserId,BaseContext.getCurrentId());
+        lambdaQueryWrapper.orderByAsc(ShoppingCart::getCreateTime);
+        List<ShoppingCart> list = shoppingCartService.list(lambdaQueryWrapper);
+        return R.success(list);
+    }
+
+    /**
+     * 清空购物车
+     * @return
+     */
+    @DeleteMapping("/clean")
+    public R<String> clean() {
+        LambdaQueryWrapper<ShoppingCart> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(ShoppingCart::getUserId,BaseContext.getCurrentId());
+        shoppingCartService.remove(lambdaQueryWrapper);
+        return R.success("清空购物车成功！");
+    }
+
 
 
 }
