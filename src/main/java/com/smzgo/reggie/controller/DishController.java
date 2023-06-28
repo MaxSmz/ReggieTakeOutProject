@@ -6,6 +6,7 @@ import com.smzgo.reggie.common.R;
 import com.smzgo.reggie.dto.DishDto;
 import com.smzgo.reggie.entity.Category;
 import com.smzgo.reggie.entity.Dish;
+import com.smzgo.reggie.entity.DishFlavor;
 import com.smzgo.reggie.service.CategoryService;
 import com.smzgo.reggie.service.DishFlavorService;
 import com.smzgo.reggie.service.DishService;
@@ -110,24 +111,62 @@ public class DishController {
         return R.success("修改菜品成功");
     }
 
+//    /**
+//     * 获取菜品集合
+//     * @param dish
+//     * @return
+//     */
+//    @GetMapping("/list")
+//    public R<List<Dish>> list(Dish dish) {
+//        LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+//
+//        lambdaQueryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
+//
+//        lambdaQueryWrapper.eq(Dish::getStatus,1);
+//
+//        lambdaQueryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+//
+//        List<Dish> list = dishService.list(lambdaQueryWrapper);
+//
+//        return R.success(list);
+//    }
+
     /**
-     * 获取菜品集合
+     * 获取菜品集合，包含菜品的分类名称以及菜品的口味信息
      * @param dish
      * @return
      */
     @GetMapping("/list")
-    public R<List<Dish>> list(Dish dish) {
+    public R<List<DishDto>> list(Dish dish) {
+        // 查询菜品基本信息
         LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-
         lambdaQueryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
-
         lambdaQueryWrapper.eq(Dish::getStatus,1);
-
         lambdaQueryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+        List<Dish> dishList = dishService.list(lambdaQueryWrapper);
 
-        List<Dish> list = dishService.list(lambdaQueryWrapper);
+        List<DishDto> dishDtoList = dishList.stream().map((item) -> {
+            DishDto dishDto = new DishDto();
+            BeanUtils.copyProperties(item, dishDto);
+            // 添加菜品分类名称至dishDto
+            Long categoryId = item.getCategoryId();
+            Category category = categoryService.getById(categoryId);
+            if(category != null) {
+                String categoryName = category.getName();
+                dishDto.setCategoryName(categoryName);
+            }
 
-        return R.success(list);
+            // 添加菜品口味信息至dishDto
+            Long dishId = item.getId();
+            LambdaQueryWrapper<DishFlavor> flavorLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            flavorLambdaQueryWrapper.eq(DishFlavor::getDishId,dishId);
+            List<DishFlavor> dishFlavorList = dishFlavorService.list(flavorLambdaQueryWrapper);
+            dishDto.setFlavors(dishFlavorList);
+            return dishDto;
+        }).toList();
+
+        return R.success(dishDtoList);
     }
+
 
 }
