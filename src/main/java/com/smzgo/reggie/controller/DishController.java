@@ -1,5 +1,6 @@
 package com.smzgo.reggie.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.smzgo.reggie.common.R;
@@ -13,8 +14,10 @@ import com.smzgo.reggie.service.DishService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/dish")
@@ -30,6 +33,9 @@ public class DishController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
     /**
      * 保存菜品
      * @param dishDto
@@ -39,6 +45,11 @@ public class DishController {
     public R<String> save(@RequestBody DishDto dishDto) {
         // 使用dto来封装dish与dishFlavor两张表的实体类
         dishService.saveDishWithFlavor(dishDto);
+
+        // 清理redis缓存
+        String key = "dish_" + dishDto.getCategoryId() + "_1";
+        stringRedisTemplate.delete(key);
+
         return R.success("新增菜品成功！");
     }
 
@@ -108,28 +119,14 @@ public class DishController {
     @PutMapping
     public R<String> update(@RequestBody DishDto dishDto) {
         dishService.updateDishWithFlavor(dishDto);
+
+        // 清理redis缓存
+        String key = "dish_" + dishDto.getCategoryId() + "_1";
+        stringRedisTemplate.delete(key);
+
         return R.success("修改菜品成功");
     }
 
-//    /**
-//     * 获取菜品集合
-//     * @param dish
-//     * @return
-//     */
-//    @GetMapping("/list")
-//    public R<List<Dish>> list(Dish dish) {
-//        LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-//
-//        lambdaQueryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
-//
-//        lambdaQueryWrapper.eq(Dish::getStatus,1);
-//
-//        lambdaQueryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
-//
-//        List<Dish> list = dishService.list(lambdaQueryWrapper);
-//
-//        return R.success(list);
-//    }
 
     /**
      * 获取菜品集合，包含菜品的分类名称以及菜品的口味信息
@@ -138,6 +135,19 @@ public class DishController {
      */
     @GetMapping("/list")
     public R<List<DishDto>> list(Dish dish) {
+        List<DishDto> dishDtoList = null;
+
+        // 查询redis是否有菜品的缓存信息
+        String key = "dish_" + dish.getCategoryId() + "_" + dish.getStatus();
+        // 使用Fastjson将List对象转换成支持json格式的String存储在redis中
+        String dishDtoListJsonString = stringRedisTemplate.opsForValue().get(key);
+        dishDtoList = JSON.parseArray(dishDtoListJsonString, DishDto.class);
+
+        // 如果有则返回
+        if (dishDtoList != null) {
+            return R.success(dishDtoList);
+        }
+
         // 查询菜品基本信息
         LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
@@ -145,7 +155,7 @@ public class DishController {
         lambdaQueryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
         List<Dish> dishList = dishService.list(lambdaQueryWrapper);
 
-        List<DishDto> dishDtoList = dishList.stream().map((item) -> {
+        dishDtoList = dishList.stream().map((item) -> {
             DishDto dishDto = new DishDto();
             BeanUtils.copyProperties(item, dishDto);
             // 添加菜品分类名称至dishDto
@@ -164,6 +174,10 @@ public class DishController {
             dishDto.setFlavors(dishFlavorList);
             return dishDto;
         }).toList();
+
+        // 如果没有则存入redis中之后返回
+        String jsonString = JSON.toJSONString(dishDtoList);
+        stringRedisTemplate.opsForValue().set(key,jsonString,60, TimeUnit.MINUTES);
 
         return R.success(dishDtoList);
     }
